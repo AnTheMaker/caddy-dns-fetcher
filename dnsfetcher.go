@@ -60,6 +60,8 @@ func (s DNSFetcher) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 	response := ""
 
 	repl := r.Context().Value(caddy.ReplacerCtxKey).(*caddy.Replacer)
+	s.Name = repl.ReplaceAll(s.Name, "") // resolve any placeholders in the input name
+
 	repl.Set("dnsfetcher.response", response)
 
 	if !regexp.MustCompile(`^([\p{L}\w\-]+\.)+[A-Za-z]{2,}$`).MatchString(s.Name) {

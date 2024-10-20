@@ -29,7 +29,7 @@ type DNSFetcher struct {
 // CaddyModule returns the Caddy module information.
 func (DNSFetcher) CaddyModule() caddy.ModuleInfo {
 	return caddy.ModuleInfo{
-		ID:  "http.matchers.dnsfetcher",
+		ID:  "http.handlers.dnsfetcher",
 		New: func() caddy.Module { return new(DNSFetcher) },
 	}
 }
@@ -98,7 +98,7 @@ func (s *DNSFetcher) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 			s.Type = args[0]
 			s.Name = args[1]
 		default:
-			return d.Err("unexpected number of arguments")
+			return d.Err("unexpected number of arguments. usage: dnsfetcher `TYPE HOST`")
 		}
 	}
 

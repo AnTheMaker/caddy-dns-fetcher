@@ -66,21 +66,24 @@ func (s DNSFetcher) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 	case "TXT":
 		result, err := net.LookupTXT(s.Name)
 		if err != nil || len(result) == 0 {
-			return next.ServeHTTP(w, r)
+			s.logger.Info("DNS Fetcher ERROR", zap.String("err", err.Error()), zap.String("host", s.Name))
+		} else {
+			response = result[0]
 		}
-		response = result[0]
 	case "IP", "A", "AAAA":
-		result, err := net.LookupAddr(s.Name)
+		result, err := net.LookupHost(s.Name)
 		if err != nil || len(result) == 0 {
-			return next.ServeHTTP(w, r)
+			s.logger.Info("DNS Fetcher ERROR", zap.String("err", err.Error()), zap.String("host", s.Name))
+		} else {
+			response = result[0]
 		}
-		response = result[0]
 	case "CNAME":
 		result, err := net.LookupCNAME(s.Name)
 		if err != nil || len(result) == 0 {
-			return next.ServeHTTP(w, r)
+			s.logger.Info("DNS Fetcher ERROR", zap.String("err", err.Error()), zap.String("host", s.Name))
+		} else {
+			response = result
 		}
-		response = result
 	}
 
 	repl := r.Context().Value(caddy.ReplacerCtxKey).(*caddy.Replacer)

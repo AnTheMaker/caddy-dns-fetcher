@@ -38,7 +38,7 @@ func (s *DNSFetcher) Provision(ctx caddy.Context) error {
 	return nil
 }
 
-func (s *DNSFetcher) Validate() error {
+func (s DNSFetcher) Validate() error {
 	if s.Type == "" {
 		return fmt.Errorf("type is required")
 	}

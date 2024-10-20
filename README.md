@@ -4,7 +4,7 @@ Allows you to query a hostname over dns and use the returning value however you 
 Example:
 ```
 {
-  order dnsfetcher before basic_auth
+  order dnsfetcher before redir
 }
 localhost {
   dnsfetcher TXT example.org

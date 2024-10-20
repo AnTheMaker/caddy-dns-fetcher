@@ -53,14 +53,19 @@ func (s *DNSFetcher) Validate() error {
 	if s.Name == "" {
 		return fmt.Errorf("name is required")
 	}
-	if !regexp.MustCompile(`^([\p{L}\w\-]+\.)+[A-Za-z]{2,}$`).MatchString(s.Name) {
-		return fmt.Errorf("name is not a valid hostname")
-	}
 	return nil
 }
 
 func (s DNSFetcher) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
 	response := ""
+
+	repl := r.Context().Value(caddy.ReplacerCtxKey).(*caddy.Replacer)
+	repl.Set("dnsfetcher.response", response)
+
+	if !regexp.MustCompile(`^([\p{L}\w\-]+\.)+[A-Za-z]{2,}$`).MatchString(s.Name) {
+		s.logger.Info("DNS Fetcher ERROR: Name is not a valid Hostname", zap.String("host", s.Name))
+		return next.ServeHTTP(w, r)
+	}
 
 	switch strings.ToUpper(s.Type) {
 	case "TXT":
@@ -86,7 +91,6 @@ func (s DNSFetcher) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 		}
 	}
 
-	repl := r.Context().Value(caddy.ReplacerCtxKey).(*caddy.Replacer)
 	repl.Set("dnsfetcher.response", response)
 
 	return next.ServeHTTP(w, r)

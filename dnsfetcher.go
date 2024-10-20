@@ -17,6 +17,7 @@ import (
 func init() {
 	caddy.RegisterModule(DNSFetcher{})
 	httpcaddyfile.RegisterHandlerDirective("dnsfetcher", parseCaddyfile)
+	httpcaddyfile.RegisterDirectiveOrder("dnsfetcher", "before", "basic_auth")
 }
 
 type DNSFetcher struct {
@@ -38,15 +39,13 @@ func (s *DNSFetcher) Provision(ctx caddy.Context) error {
 	return nil
 }
 
-func (s DNSFetcher) Validate() error {
+func (s *DNSFetcher) Validate() error {
 	if s.Type == "" {
 		return fmt.Errorf("type is required")
 	}
 
 	switch strings.ToUpper(s.Type) {
-	case "A", "AAAA":
-		s.Type = "IP"
-	case "TXT", "IP", "CNAME":
+	case "TXT", "IP", "A", "AAAA", "CNAME":
 		// ok
 	default:
 		return fmt.Errorf("type set to unsupported dns record type")
@@ -61,7 +60,6 @@ func (s DNSFetcher) Validate() error {
 }
 
 func (s DNSFetcher) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
-
 	response := ""
 
 	switch strings.ToUpper(s.Type) {
@@ -71,7 +69,7 @@ func (s DNSFetcher) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 			return next.ServeHTTP(w, r)
 		}
 		response = result[0]
-	case "IP":
+	case "IP", "A", "AAAA":
 		result, err := net.LookupAddr(s.Name)
 		if err != nil || len(result) == 0 {
 			return next.ServeHTTP(w, r)
@@ -116,6 +114,7 @@ func parseCaddyfile(h httpcaddyfile.Helper) (caddyhttp.MiddlewareHandler, error)
 // Interface guards
 var (
 	_ caddy.Provisioner           = (*DNSFetcher)(nil)
+	_ caddy.Validator             = (*DNSFetcher)(nil)
 	_ caddy.Module                = (*DNSFetcher)(nil)
 	_ caddyhttp.MiddlewareHandler = (*DNSFetcher)(nil)
 	_ caddyfile.Unmarshaler       = (*DNSFetcher)(nil)
